@@ -1,54 +1,58 @@
 const express = require('express');
-var app = express();
+const app = express()
 
-var bodyParser = require("body-parser");
-app.use(bodyParser.json());
+//USE PROXY SERVER TO REDIRECT THE INCOMMING REQUEST
+const httpProxy = require('http-proxy')
+const proxy = httpProxy.createProxyServer();
 
-const dbconnect = require('./DBconnect.js');
-const PersonModel = require('./schema.js');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
+const JWT_SECRETE = process.env.JWT_SECRETE;
 
-/*
-In the postman use the following URL
-localhost:5000/reg
-
-{
-  "firstname":"Joe",
-  "email":"a@gmail.com",
-  "password":"abc",
-  "mobile": 12345678,
-  "role": "student"
+function authToken(req, res, next) {
+    console.log(req.headers.authorization);
+    const header = req?.headers.authorization;
+    const token = header && header.split(" ")[1];
+    if (token == null) {
+        return res.status(401).json({"Please send token": err});
+    }
+    jwt.verify(token, JWT_SECRETE, (err, user) => {
+        if (err) {
+            return res.status(403).json({"Invalid token": err});
+        }
+        req.user = user;
+        next();
+    })
 }
-
-*/
-
-function uniqueid(min, max) {
-  return Math.floor(
-    Math.random() * (max - min + 1) + min
-  )
+function authRole(role) {
+    return (req, res, next) => {
+        if (req.user.role !== role) {
+            return res.status(403).json({"Unauthorized": err});
+        }
+        next();
+    }
 }
+//REDIRECT TO THE STUDENT MICROSERVICE
+app.use('/student',authToken ,authRole('student'),(req, res) => {
+    console.log("INSIDE API GATEWAY STUDENT ROUTE")
+    proxy.web(req, res, { target: 'http://localhost:5001' });
+})
 
-//REG API
-app.post('/register', (req, res) => {
-  console.log("REG API EXECUTED")
-  const pobj = new PersonModel({
-    id: uniqueid(1000, 9999),
-    name: req.body.firstname,
-    emailid: req.body.email,
-    pass: req.body.password,
-    mobile: req.body.mobile,
-    role: req.body.role
-  });//CLOSE PersonModel
-  
-  //INSERT/SAVE THE RECORD/DOCUMENT
-  pobj.save()
-    .then(inserteddocument => {
-      res.status(200).send('DOCUMENT INSERED IN MONGODB DATABASE');
-    })//CLOSE THEN
-    .catch(err => {
-      res.status(500).send({ message: err.message || 'Error in Employee Save ' })
-    });//CLOSE CATCH
-}//CLOSE CALLBACK FUNCTION BODY
-);//CLOSE POST METHOD
+//REDIRECT TO THE TEACHER MICROSERVICE
+app.use('/teacher',authToken ,authRole('teacher'),(req, res) => {
+    console.log("INSIDE API GATEWAY TEACHER ROUTE")
+    proxy.web(req, res, { target: 'http://localhost:5002' });
+})
 
-// START THE EXPRESS SERVER. 5005 is the PORT NUMBER
-app.listen(5005, () => console.log('EXPRESS Server Started at Port No: 5005'));
+app.use('/authentication', (req, res) => {
+    console.log("INSIDE API GATEWAY AUTHENTICATION ROUTE")
+    proxy.web(req, res, { target: 'http://localhost:5004' });
+})
+app.use('/registration', (req, res) => {
+    console.log("INSIDE API GATEWAY REGISTRATION ROUTE");
+    proxy.web(req, res, { target: 'http://localhost:5005' });
+});
+
+app.listen(4000, () => {
+    console.log("API Gateway Service is running on PORT NO : ", 4000)
+})
