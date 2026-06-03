@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 
 // Database Connection URL
-const uri = "mongodb+srv://officialmengkheangseng_db_user:T0LmAvfO27baBTX1@task.ycxwppk.mongodb.net/aupp?appName=Task";
+const uri = "C";
 // const uri = "mongodb://officialmengkheangseng_db_user:RsrGJNgplw9ceMcY@ac-5ukt5sn-shard-00-00.ylaq8iw.mongodb.net:27017,ac-5ukt5sn-shard-00-01.ylaq8iw.mongodb.net:27017,ac-5ukt5sn-shard-00-02.ylaq8iw.mongodb.net:27017/aupp?ssl=true&replicaSet=atlas-3ddn06-shard-0&authSource=admin&appName=Task2";
 const clientOptions = { serverApi: { version: '1', strict: true, deprecationErrors: true } };
 
