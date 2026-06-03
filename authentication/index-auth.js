@@ -28,9 +28,9 @@ localhost:5002/login
 // ];
 // LOGIN API
 app.post("/login", async (req, res) => {
-  const {name, pass } = req.body;
+  const {name, role } = req.body;
   // Example using your PersonModel database schema
-  const foundUser = await PersonModel.findOne({ name, pass });
+  const foundUser = await PersonModel.findOne({ name, role });
       if (foundUser) {
         const token = jwt.sign({ 
           name: foundUser.name, role: foundUser.role }, JWT_SECRETE, { expiresIn: '24h' })
@@ -44,5 +44,5 @@ app.post("/login", async (req, res) => {
 //CLOSE Post METHOD
 
 app.listen(5004, () => {
-    console.log('Authentication Service Server is running on PORT NO: 5002')
+    console.log('Authentication Service Server is running on PORT NO: 5004')
 })
